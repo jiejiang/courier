@@ -1,0 +1,63 @@
+
+.user-panel {
+    line-height: normal !important;
+}
+
+td .progress {
+    margin: 0;
+    position: relative;
+}
+
+.progress span {
+    color: black;
+    display: block;
+    position: absolute;
+    width: 100%;
+}
+
+#receiver_address .panel, #sender_address .panel {
+    margin: 10px;
+}
+
+#receiver_address .panel-body, #sender_address .panel-body {
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+.borderless td, .borderless th {
+    border: none !important;
+}
+
+#tbl_courier_cart {
+    border: 1px solid black;
+}
+
+div.first_package {
+    margin-bottom: 15px;
+}
+
+#package_formset input {
+    text-align: right;
+}
+
+.hr-sect {
+	display: flex;
+	flex-basis: 100%;
+	align-items: center;
+	color: rgba(0, 0, 0, 0.35);
+	margin-bottom: 8px;
+}
+.hr-sect::before,
+.hr-sect::after {
+	content: "";
+	flex-grow: 1;
+	background: rgba(0, 0, 0, 0.35);
+	height: 1px;
+	font-size: 0px;
+	line-height: 0px;
+	margin: 0px 8px;
+}
+
+.text-large {
+  font-size: 150%;
+}

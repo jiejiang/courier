@@ -1,0 +1,116 @@
+{% extends "track_order_base.html" %}
+{% load staticfiles i18n crispy_forms_tags tz %}
+{% block meta_title %}{% trans "空运包裹追踪查询 Track Your Parcel" %}{% endblock %}
+{% block site_title %}{%endblock%}
+{% block navbar_block %}{% endblock %}
+{% block title_block %}{% endblock %}
+{% block breadcrumb_block %}{% endblock %}
+{% block navbar_dropdown_menu %}{% endblock%}
+{% block main %}
+    <div class="row main-login text-center">
+        <div class="col-md-12 top-buffer hidden-xs">
+            <img src="{% static "img/logo.png" %}" class="max-100pc">
+        </div>
+        <div class="col-md-12">
+            <img src="{% static "img/title.png" %}" class="max-100pc">
+        </div>
+        <div class="col-md-12">
+            <div class="track-form">
+                {% crispy form %}
+            </div>
+
+            <div class="track-result">
+                {% if message %}
+                <h4 class="text-danger">{{ message }}</h4>
+                {% endif %}
+                {% if show_content %}
+                <table class="table table-bordered table-hover table-condensed table-responsive table-striped">
+                    <caption class="text-danger">{{now|date:'Y-m-d H:i:s'}}&nbsp;&mdash;&nbsp;{% trans "追踪号【"%}{{ order_number }}{% trans "】查询到您快递信息如下： "%}</caption>
+
+                    <thead>
+                        <tr>
+                            <th class="text-center col-md-4">{% trans "英国时间" %}</th>
+                            <th class="text-center">{% trans "地点和跟踪进度" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if record.creation_time < now %}
+                        <tr>
+                            <td>{{ record.creation_time|date:'Y-m-d H:i' }}</td>
+                            {% if record.route == "yunda" %}
+                            <td class="text-left">{% trans "英国包裹信息与面单已生成" %}</td>
+                            {% else %}
+                            <td class="text-left">{% trans "【英国】包裹信息与面单已生成" %}</td>
+                            {% endif %}
+                        </tr>
+                        {% endif %}
+
+                        {% if record.departure_time < now %}
+                        <tr>
+                            <td>{{ record.departure_time|date:'Y-m-d H:i' }}</td>
+                            {% if record.route == "yunda" %}
+                            <td class="text-left">{% trans "英国离开处理中心发往中国广州" %}</td>
+                            {% elif record.route == "xian" %}
+                            <td class="text-left">{% trans "【英国】离开处理中心发往中国" %}</td>
+                            {% else %}
+                            <td class="text-left">{% trans "【英国】离开处理中心发往中国广州" %}</td>
+                            {% endif %}
+                        </tr>
+                        {% endif %}
+
+                        {% if record.landed_time < now %}
+                        <tr>
+                            <td>{{ record.landed_time|date:'Y-m-d H:i' }}</td>
+                            {% if record.route == "yunda" %}
+                            <td class="text-left">{% trans "广州市到达广州白云机场 运往海关申报清关" %}</td>
+                            {% elif record.route == "jixun" %}
+                            <td class="text-left">{% trans "【广州市】到达广州白云机场，准备转关，下一站【晋江中心】" %}</td>
+                            {% elif record.route == "xian" %}
+                            <td class="text-left">{% trans "【西安市】到达西安咸阳国际机场 进行转关" %}</td>
+                            {% else %}
+                            <td class="text-left">{% trans "【广州市】到达广州白云机场 运往海关申报清关" %}</td>
+                            {% endif %}
+                        </tr>
+                        {% endif %}
+
+                        {% if record.custom_clearance_time < now %}
+                        <tr>
+                            <td>{{ record.custom_clearance_time|date:'Y-m-d H:i' }}</td>
+                            {% if record.route == "yunda" %}
+                            <td class="text-left">{% trans "江门市到达海关快件处理中心 进行清关" %}</td>
+                            {% elif record.route == "jixun" %}
+                            <td class="text-left">{% trans "【晋江市】到达海关快件处理中心 安排清关" %}</td>
+                            {% elif record.route == "xian" %}
+                            <td class="text-left">{% trans "【西安市】到达海关快件处理中心 进行申报清关" %}</td>
+                            {% else %}
+                            <td class="text-left">{% trans "【江门市】到达海关快件处理中心 进行清关" %}</td>
+                            {% endif %}
+                        </tr>
+                        {% endif %}
+
+                        {% for item in agent_items %}
+                        <tr>
+                            <td>{{ item.time|date:'Y-m-d H:i' }}</td>
+                            <td class="text-left">{{ item.detail }}</td>
+                        </tr>
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+                {% endif%}
+            </div>
+
+
+        </div>
+    </div>
+{% endblock %}
+{% block extra_css %}
+    <link href="{% static "css/query_order.css" %}" rel="stylesheet">
+    <link href="{% static "css/track_shipping.css" %}" rel="stylesheet">
+{% endblock %}
+{% block extra_js %}
+    <script type="text/javascript" src="{% static "js/track_shipping.js" %}"></script>
+{% endblock %}
+{% block footer %}
+<div class="se-pre-con"></div>
+{% endblock %}

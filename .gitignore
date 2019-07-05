@@ -1,0 +1,14 @@
+*.pyc
+*.pyo
+*.db
+.DS_Store
+.coverage
+/static
+.idea
+venv
+/media
+*.log
+/waybill_storage
+*.log.*
+/data
+couriersite/local_settings.py

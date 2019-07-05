@@ -1,0 +1,1068 @@
+= CNExpress下单API接入文档
+:toc-title: 目录
+:linkattrs:
+:toc: left
+:toclevels: 3
+:asset-uri-scheme: https
+:icons: font
+:source-highlighter: highlightbash
+https://cnexpress.co.uk
+
+++++
+
+++++
+
+
+== 简介
+
+CNExpress下单API是由CNExpress独立自主开发的快递包裹下单API。通过本API，第三方开发者可以将应用接入CNExpress的快递物流线路，从而简化快递包裹的下单和投递流程。本API主要提供如下几个功能：
+
+* 推送物流信息到CNExpress
+* 自动生成快递追踪单号
+* 提取PDF格式快递面单
+
+通过该API，第三方开发应用可以轻松实现快递包裹下单和面单打印功能。将面单打印并粘贴在包裹上，就可以直接通过CNExpress的快递线路发货，从而简化整个物流操作。
+
+技术层面上，该API只需要开发者通过HTTP协议的GET和POST请求就可以完成，而数据格式则是通用的JSON和数据流形式。该API是完全的REST形式，便于在各种系统中集成。
+
+== 下单流程
+
+首先，接入方需要获取包裹信息，包括发件人、收件人、产品和包裹信息，按照API要求将各种信息POST到requests接口，获取下单请求ID。每次请求可以发送多个包裹信息。
+
+之后，接入方通过requests的GET接口传入请求ID，轮询请求处理状态。如果请求状态为Succeeded，则接入方可以获取每个包裹的追踪号。
+
+最后，接入方可以通过waybills的GET接口获取PDF面单文件。打印面单贴在包裹上即可通过CNExpress渠道发货。
+
+这里需要说明的是，包裹追踪号一旦生成，即可通过CNExpress提供的物流查询接口，实时查询物流状态。
+
+另外需要特别指出的是，本API提供了products和cities两个额外的接口，提供所支持的产品信息和收件人城市信息，接入方在下单请求的时候必须要使用该两个接口的返回值填入相应的参数字段。如果需要支持新的产品信息，请联系CNExpress。
+
+== API Root
+
+CNExpress下单API的API Root是：
+
+[source]
+https://cnexpress.co.uk/api/v1
+
+== 账号身份认证
+
+本API接口采用link:https://en.wikipedia.org/wiki/Basic_access_authentication[HTTP Basic Authentication, window="_blank"]作为身认证方式。
+
+CNExpress将为每个接入方配置专有的用户名和密码，用作接入账号。对于每个API调用，接入方需用HTTP Basic Authentication方式进行认证。
+
+另外需要注意的是，对于测试账号，生成的包裹追踪号和面单只能用作流程测试，并不能在包裹追踪系统中查到，也不会产生费用。
+
+== API文档
+
+CNExpress API由五个部分组成：
+
+*  account API: 用户信息，余额等
+*  products API：本API支持的快递产品信息
+*  cities API：本API支持的收件人城市信息
+*  requests API：下单请求和信息获取API
+*  packages API：获取包裹信息API
+*  waybills API：下载PDF面单API
+
+=== account
+
+[source]
+https://cnexpress.co.uk/api/v1/account
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于获取本账号的用户信息。
+
+* 参数
+
+[cols="2,8"]
+.API account的HTTP GET参数
+|===
+|参数 |说明
+|===
+
+* 返回值
+
+该方法返回JSON对象，包含如下属性：
+
+[cols="2,8"]
+.API account的HTTP GET返回值
+|===
+|属性 |说明
+
+|username
+|用户账号
+|credit
+|可用余额
+|currency
+|可用余额货币单位
+|===
+
+* 调用样例
+
+[source%nowrap,bash]
+$ http -a "my_username":"my_password" GET https://cnexpress.co.uk/api/v1/account
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+...
+{
+    "credit": 1046.0,
+    "currency": "GBP",
+    "username": "my_username"
+}
+...
+
+'''
+
+=== products
+
+[source]
+https://cnexpress.co.uk/api/v1/products
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于获取能够通过CNExpress API快递的产品信息。
+
+* 参数
+
+[cols="2,8"]
+.API products的HTTP GET参数
+|===
+|参数 |说明
+|===
+
+* 返回值
+
+该方法返回JSON数组，其中每个元素包含如下属性：
+
+[cols="2,8"]
+.API products的HTTP GET返回值
+|===
+|属性 |说明
+
+|url
+|该产品对应的product/<barcode> URL
+|name
+|产品名称
+|barcode
+|产品EAN-13条码值
+|===
+
+* 调用样例（本文档中所有调用样例都是使用link:https://github.com/jkbrzt/httpie[HTTPie,window="_blank"]完成）
+
+[source%nowrap,bash]
+$ http -a "my_username":"my_password" GET https://cnexpress.co.uk/api/v1/products
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+...
+[
+    {
+        "url": "https://cnexpress.co.uk/api/v1/products/5000378998287",
+        "name": "爱他美奶粉1段",
+        "barcode": "5000378998287"
+    },
+...
+    {
+        "url": "https://cnexpress.co.uk/api/v1/products/0721866695451",
+        "name": "牛栏奶粉4段",
+        "barcode": "0721866695451"
+    }
+]
+
+
+'''
+
+=== products/<barcode>
+
+[source]
+https://cnexpress.co.uk/api/v1/products/<barcode>
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于测试特定barcode产品能否通过CNExpress API快递。
+
+* 参数
+
+[cols="2,8"]
+.API products的HTTP GET参数
+|===
+|参数 |说明
+|===
+
+* 返回值
+
+该方法返回JSON对象，包含如下属性：
+
+[cols="2,8"]
+.API products的HTTP GET返回值
+|===
+|属性 |说明
+
+|url
+|该产品对应的product/<barcode> URL
+|name
+|产品名称
+|barcode
+|产品EAN-13条码值
+|===
+
+* 调用样例（本文档中所有调用样例都是使用link:https://github.com/jkbrzt/httpie[HTTPie,window="_blank"]完成）
+
+[source%nowrap,bash]
+$ http -a "my_username":"my_password" GET https://cnexpress.co.uk/api/v1/products/5000378998287
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+...
+{
+    "barcode": "5000378998287",
+    "name": "爱他美奶粉1段",
+    "url": "https://cnexpress.co.uk/api/v1/products/5000378998287"
+}
+
+
+'''
+
+=== cities
+
+[source]
+https://cnexpress.co.uk/api/v1/cities
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于获取能够通过CNExpress API快递的收件人城市信息。
+
+* 参数
+
+[cols="2,8"]
+.API cities的HTTP GET参数
+|===
+|参数 |说明
+|===
+
+* 返回值
+
+该方法返回JSON数组，其中每个元素包含如下属性：
+
+[cols="2,8"]
+.API cities的HTTP GET返回值
+|===
+|属性 |说明
+
+|name
+|城市名称
+|contains
+|可选。JSON数组，每个元素是该城市的下级城市信息。
+|===
+
+* 调用样例
+
+[source%nowrap,bash]
+$ http -a "my_username":"my_password" GET https://cnexpress.co.uk/api/v1/cities
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+...
+[
+    {
+        "contains": [
+            {
+                "contains": [
+                    {
+                        "name": "西城区"
+                    },
+                    ...
+                    {
+                        "name": "延庆县"
+                    }
+                ],
+                "name": "北京"
+            }
+        ],
+        "name": "北京"
+    },
+    {
+        "contains": [
+            {
+                "contains": [
+                    {
+                        "name": "迎江区"
+                    },
+                    ...
+                    {
+                        "name": "岳西县"
+                    }
+                ],
+                "name": "安庆"
+            },
+            ...
+            {
+                "contains": [
+                    {
+                        "name": "庐阳区"
+                    },
+                    {
+                        "name": "瑶海区"
+                    },
+                    {
+                        "name": "蜀山区"
+                    },
+                    {
+                        "name": "包河区"
+                    },
+                    {
+                        "name": "长丰县"
+                    },
+                    {
+                        "name": "肥东县"
+                    },
+                    {
+                        "name": "肥西县"
+                    }
+                ],
+                "name": "合肥"
+            }
+        ],
+        "name": "安徽"
+    },
+...
+
+'''
+
+IMPORTANT: cities返回的任何城市都可以用作收件人地址，但CNExpress推荐使用第二级和第三级城市。
+
+IMPORTANT: "香港“，‘澳门”和“台湾”的城市不能作为有效收件人城市使用。
+
+
+=== requests
+
+[source]
+https://cnexpress.co.uk/api/v1/requests
+
+==== POST
+
+* 说明
+
+HTTP POST方法。该方法用于向CNExpress提交快递下单请求。该请求包含一个或者多个包裹信息。如果请求数据合法，API会返回一个唯一的请求ID。
+
+通过此请求ID，接入方需要使用/requests/<request_no>方法轮询请求状态，直到请求状态为Succeeded或者Failed。如果请求状态为Succeeded，则接入方可以同时获得所有包裹的追踪号。用此追踪号可以查询包裹信息以及下载包裹PDF面单。
+
+* 参数
+
+[cols="2,8"]
+.API requests的HTTP POST参数
+|===
+|参数 |说明
+
+|packages
+|JSON数组，包含一个或者多个JSON对象，其中每个JSON对象代表一个待发送的包裹。每个包裹的参数方式见表<<id_of_package_param_table>>。
+|===
+
+[cols="3,7"]
+.packages数组单个元素的参数
+[[id_of_package_param_table]]
+|===
+|参数 |说明
+
+|sender_name
+|发件人姓名
+|sender_phone_number
+|发件人电话号码
+|sender_address
+|发件人地址（全部地址）
+|receiver_name
+|收件人姓名
+|receiver_phone_number
+|收件人手机号码
+|receiver_address
+|收件人地址（不包含城市）
+|receiver_city
+|收件人城市（必须出自cities API返回值）
+|receiver_post_code
+|收件人姓名
+|receiver_id_number
+|收件人身份证号码
+|weight
+|包裹重量（千克）
+|length
+|包裹长度（厘米）
+|width
+|包裹宽度（厘米）
+|height
+|包裹高度（厘米）
+|items
+|包裹内容。这是一个JSON数组，包含一个或者多个JSON对象，其中每个JSON对象代表一种代发产品。每个产品的参数方式见表<<id_of_item_param_table>>。
+
+|===
+
+[cols="2,8"]
+.items数组单个元素的参数
+[[id_of_item_param_table]]
+|===
+|参数 |说明
+
+|barcode
+|(与name字段至少需要设置一个，barcode优先) 待发产品barcode（必须出自products API返回值）
+|name
+|(与barcode字段至少需要设置一个，barcode优先) 待发产品名称（必须出自products API返回值）
+|count
+|待发产品个数
+|===
+
+IMPORTANT: 目前对于奶粉项目，只支持每个包裹4罐或者6罐奶粉，所以对于每个package里面的items数组，count参数叠加之后必须是4或者6，否则报错。
+
+* 返回值
+
+该API的返回值是一个JSON对象，其包含如下属性:
+
+[cols="2,8"]
+.API requests的HTTP POST返回值
+[[id_of_requests_response]]
+|===
+|属性 |说明
+
+|url
+|该下单请求对应的requests/<request_no> URL
+|test_mode
+|该请求是否在账号的测试模式下发出
+|request_no
+|该请求的唯一ID
+|waybills
+|该请求的面单下载URL，该属性在请求状态不是Succeeded的情况下应该为null
+|creation_date
+|下单时间
+|status
+|请求状态，只能是Created, Waiting, Succeeded和Failed四个状态之一。
+|error_msg
+|如果请求为Failed状态，该属性包含错误信息。
+|packages
+|JSON数组，其中每个元素为每个包裹的发货信息，具体请参考packages/<request_no>-<tracking_no>的返回结果：<<id_of_package_response>>。
+|total_cost
+|该请求中所有包裹的发货费用总和（英镑）
+|===
+
+IMPORTANT: 如果账号不是测试模式，请确保该账号有足够的余额请求发货，否则API会一直返回余额不足的错误。详情请咨询CNExpress。
+
+* 调用样例
+
+本样例使用如下json文件sample.json作为请求数据
+[source%nowrap,json]
+{
+  "packages": [
+      {
+        "sender_name": "发件人1",
+        "sender_phone_number": "01234567",
+        "sender_address": "发件人地址测试英国地址",
+        "receiver_name": "张三",
+        "receiver_phone_number": "12345678911",
+        "receiver_address": "黄浦江路33号",
+        "receiver_city": "黄山市",
+        "receiver_post_code": "200000",
+        "receiver_id_number": "X40192928323",
+        "weight": "4.00",
+        "length": 20,
+        "width": 20,
+        "height": 20,
+        "items": [
+            {
+              "barcode": "5000378998287",
+              "count": 2
+            },
+            {
+              "name": "爱他美奶粉2段",
+              "count": 4
+            }
+          ]
+      },
+      {
+        "sender_name": "Sender Name",
+        "sender_phone_number": "1234891203471230",
+        "sender_address": "Sender Address in English",
+        "receiver_name": "李四",
+        "receiver_phone_number": "13901234567",
+        "receiver_address": "长安路22号",
+        "receiver_city": "北京",
+        "receiver_post_code": "100000",
+        "receiver_id_number": "123239230921312",
+        "weight": "3.00",
+        "length": 20,
+        "width": 20,
+        "height": 20,
+        "items": [
+            {
+              "name": "爱他美奶粉3段",
+              "count": 2
+            },
+            {
+              "name": "爱他美奶粉2段",
+              "count": 1
+            },
+            {
+              "barcode": "5000378998287",
+              "count": 1
+            }
+          ]
+      }
+    ]
+}
+
+'''
+
+[source%nowrap,bash]
+$ http -a "your_username":"your_password" POST https://cnexpress.co.uk/api/v1/requests < sample.json
+HTTP/1.1 201 CREATED
+...
+Content-Type: application/json
+...
+{
+    "creation_date": "2017-08-04T16:11:24.442102Z",
+    "error_msg": null,
+    "packages": [
+        {
+            "cost": 20.0,
+            "height": 20,
+            "items": [
+                {
+                    "barcode": "5000378998287",
+                    "count": 2,
+                    "name": "爱他美奶粉1段"
+                },
+                {
+                    "barcode": "5000378998317",
+                    "count": 4,
+                    "name": "爱他美奶粉2段"
+                }
+            ],
+            "length": 20,
+            "receiver_address": "黄浦江路33号",
+            "receiver_city": "黄山市",
+            "receiver_id_number": "X40192928323",
+            "receiver_name": "张三",
+            "receiver_phone_number": "12345678911",
+            "receiver_post_code": "200000",
+            "request": "https://cnexpress.co.uk/api/v1/requests/CE2017080400000004",
+            "sender_address": "发件人地址测试英国地址",
+            "sender_name": "发件人1",
+            "sender_phone_number": "01234567",
+            "tracking_no": null,
+            "url": null,
+            "waybill": null,
+            "weight": "4.00",
+            "width": 20
+        },
+        {
+            "cost": 13.0,
+            "height": 20,
+            "items": [
+                {
+                    "barcode": "0721865545337",
+                    "count": 2,
+                    "name": "爱他美奶粉3段"
+                },
+                {
+                    "barcode": "5000378998317",
+                    "count": 1,
+                    "name": "爱他美奶粉2段"
+                },
+                {
+                    "barcode": "5000378998287",
+                    "count": 1,
+                    "name": "爱他美奶粉1段"
+                }
+            ],
+            "length": 20,
+            "receiver_address": "长安路22号",
+            "receiver_city": "北京",
+            "receiver_id_number": "123239230921312",
+            "receiver_name": "李四",
+            "receiver_phone_number": "13901234567",
+            "receiver_post_code": "100000",
+            "request": "https://cnexpress.co.uk/api/v1/requests/CE2017080400000004",
+            "sender_address": "Sender Address in English",
+            "sender_name": "Sender Name",
+            "sender_phone_number": "1234891203471230",
+            "tracking_no": null,
+            "url": null,
+            "waybill": null,
+            "weight": "3.00",
+            "width": 20
+        }
+    ],
+    "request_no": "CE2017080400000004",
+    "status": "Created",
+    "test_mode": true,
+    "total_cost": 33.0,
+    "url": "https://cnexpress.co.uk/api/v1/requests/CE2017080400000004",
+    "waybills": null
+}
+
+'''
+
+=== requests/<request_no>
+
+[source]
+https://cnexpress.co.uk/api/v1/requests/<request_no>
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于轮询下单请求的状态。在下单请求状态为Succeeded的情况下，可以用于获取该请求的所有包裹信息和面单的下载URL。在下单请求为Failed状态下，可以用于获取错误信息。
+
+* 参数
+
+[cols="2,8"]
+.API requests/<request_no>的HTTP GET参数
+|===
+|Parameter |Description
+
+|===
+
+
+* 返回值
+
+返回值与API requests的HTTP POST返回值相同，请参见<<id_of_requests_response>>。
+
+* 调用样例
+
+[source%nowrap,bash]
+$ http -a "your_username":"your_password" GET https://cnexpress.co.uk/api/v1/requests/2017072300000002
+HTTP/1.1 200 OK
+...
+Content-Type: application/json
+...
+{
+    "creation_date": "2017-07-23T11:11:17.982827Z",
+    "error_msg": null,
+    "packages": [
+        {
+            "cost": 20.0,
+            "height": 20,
+            "items": [
+                {
+                    "count": 2,
+                    "name": "爱他美奶粉1段",
+                    "barcode": ....
+                },
+                {
+                    "count": 4,
+                    "name": "爱他美奶粉2段",
+                    "barcode": ....
+                }
+            ],
+            "length": 20,
+            "receiver_address": "黄浦江路33号",
+            "receiver_city": "黄山市",
+            "receiver_id_number": "X40192928323",
+            "receiver_name": "张三",
+            "receiver_phone_number": "12345678911",
+            "receiver_post_code": "200000",
+            "request": "https://cnexpress.co.uk/api/v1/requests/2017072300000002",
+            "sender_address": "发件人地址测试英国地址",
+            "sender_name": "发件人1",
+            "sender_phone_number": "01234567",
+            "tracking_no": "TEST00000001",
+            "url": "https://cnexpress.co.uk/api/v1/packages/2017072300000002-TEST00000001",
+            "waybill": "https://cnexpress.co.uk/api/v1/waybills/2017072300000002-TEST00000001",
+            "weight": "4.00",
+            "width": 20
+        },
+        {
+            "cost": 13.0,
+            "height": 20,
+            "items": [
+                {
+                    "count": 2,
+                    "name": "爱他美奶粉3段",
+                    "barcode": ....
+                },
+                {
+                    "count": 1,
+                    "name": "爱他美奶粉2段",
+                    "barcode": ....
+                },
+                {
+                    "count": 1,
+                    "name": "爱他美奶粉1段",
+                    "barcode": ....
+                }
+            ],
+            "length": 20,
+            "receiver_address": "长安路22号",
+            "receiver_city": "北京",
+            "receiver_id_number": "123239230921312",
+            "receiver_name": "李四",
+            "receiver_phone_number": "13901234567",
+            "receiver_post_code": "100000",
+            "request": "https://cnexpress.co.uk/api/v1/requests/2017072300000002",
+            "sender_address": "Sender Address in English",
+            "sender_name": "Sender Name",
+            "sender_phone_number": "1234891203471230",
+            "tracking_no": "TEST00000002",
+            "url": "https://cnexpress.co.uk/api/v1/packages/2017072300000002-TEST00000002",
+            "waybill": "https://cnexpress.co.uk/api/v1/waybills/2017072300000002-TEST00000002",
+            "weight": "3.00",
+            "width": 20
+        }
+    ],
+    "request_no": "2017072300000002",
+    "status": "Succeeded",
+    "test_mode": true,
+    "total_cost": 33.0,
+    "url": "https://cnexpress.co.uk/api/v1/requests/2017072300000002",
+    "waybills": "https://cnexpress.co.uk/api/v1/waybills/request/2017072300000002"
+}
+
+'''
+
+NOTE: 下单请求从Created到Succeeded或Failed状态可能会需要几秒到几分钟不等的时间，取决于同时下单的人数后台系统的处理速度。接入方需要提前考虑到该延迟对于其系统以及业务流程的影响。
+
+=== packages/<request_no>-<tracking_no>
+
+[source]
+https://cnexpress.co.uk/api/v1/packages/<request_no>-<tracking_no>
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于在下单请求状态为Succeeded的情况下，获取单个包裹信息和其面单的下载URL。
+
+* 参数
+
+[cols="2,8"]
+.API packages/<request_no>-<tracking_no>的HTTP GET参数
+|===
+|Parameter |Description
+
+|===
+
+* 返回值
+
+该API的返回值是一个JSON对象，其包含如下属性:
+
+[cols="3,7"]
+.API packages/<request_no>-<tracking_no>的HTTP GET返回值
+[[id_of_package_response]]
+|===
+|属性 |说明
+
+|url
+|该包裹对应的packages/<request_no>-<tracking_no> URL
+|tracking_no
+|该包裹的追踪号。该属性在请求状态不是Succeeded的情况下应该为null。注意，考虑到测试号以及实际追踪号重复使用的情况，该字段并非全局唯一，而只是在同一个下单请求中唯一
+|waybill
+|该包裹面单下载URL，该属性在请求状态不是Succeeded的情况下应该为null
+|request
+|该包裹对应的下单请求URL
+|sender_name
+|发件人姓名
+|sender_phone_number
+|发件人电话号码
+|sender_address
+|发件人地址（全部地址）
+|receiver_name
+|收件人姓名
+|receiver_phone_number
+|收件人手机号码
+|receiver_address
+|收件人地址（不包含城市）
+|receiver_city
+|收件人城市
+|receiver_post_code
+|收件人姓名
+|receiver_id_number
+|收件人身份证号码
+|weight
+|包裹重量（千克）
+|length
+|包裹长度（厘米）
+|width
+|包裹宽度（厘米）
+|height
+|包裹高度（厘米）
+|items
+|包裹内容。这是一个JSON数组，包含一个或者多个JSON对象，其中每个JSON对象代表一种代发产品。每个产品的信息见表<<id_of_item_param_table>>。
+|cost
+|该包裹的发货费用（英镑）
+|===
+
+* 调用样例
+
+[source%nowrap,bash]
+$ http -a "your_username":"your_password" GET https://cnexpress.co.uk/api/v1/packages/2017072300000002-TEST00000001
+HTTP/1.1 200 OK
+...
+Content-Type: application/json
+...
+{
+    "cost": 20.0,
+    "height": 20,
+    "items": [
+        {
+            "count": 2,
+            "name": "爱他美奶粉1段",
+            "barcode": ....
+        },
+        {
+            "count": 4,
+            "name": "爱他美奶粉2段",
+            "barcode": ....
+        }
+    ],
+    "length": 20,
+    "receiver_address": "黄浦江路33号",
+    "receiver_city": "黄山市",
+    "receiver_id_number": "X40192928323",
+    "receiver_name": "张三",
+    "receiver_phone_number": "12345678911",
+    "receiver_post_code": "200000",
+    "request": "https://cnexpress.co.uk/api/v1/requests/2017072300000002",
+    "sender_address": "发件人地址测试英国地址",
+    "sender_name": "发件人1",
+    "sender_phone_number": "01234567",
+    "tracking_no": "TEST00000001",
+    "url": "https://cnexpress.co.uk/api/v1/packages/2017072300000002-TEST00000001",
+    "waybill": "https://cnexpress.co.uk/api/v1/waybills/2017072300000002-TEST00000001",
+    "weight": "4.00",
+    "width": 20
+}
+
+'''
+
+=== waybills/<request_no>-<tracking_no>
+
+[source]
+https://cnexpress.co.uk/api/v1/waybills/<request_no>-<tracking_no>
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于获取下单请求中特定包裹的面单PDF文件。
+
+* 参数
+
+[cols="2,8"]
+.API waybills/<request_no>-<tracking_no>的HTTP GET参数
+|===
+|Parameter |Description
+
+|===
+
+* 返回值
+
+返回的数据流类型为application/octet-stream，该数据流为面单的PDF文件。
+
+* 调用样例
+
+[source%nowrap,bash]
+$ http -a "your_username":"your_password" GET https://cnexpress.co.uk/api/v1/waybills/2017072300000002-TEST00000001
+HTTP/1.1 200 OK
+Content-Disposition: attachment; filename=2017072300000002-TEST00000001.pdf
+Content-Language: zh-cn
+Content-Length: 84587
+Content-Type: application/octet-stream
+...
++-----------------------------------------+
+| NOTE: binary data not shown in terminal |
++-----------------------------------------+
+
+'''
+
+=== waybills/request/<request_no>
+
+[source]
+https://cnexpress.co.uk/api/v1/waybills/request/<request_no>
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于获取下单请求中所有包裹的面单PDF文件（所有的面单都被合并在同一个PDF文件中）。
+
+* 参数
+
+[cols="2,8"]
+.API waybills/request/<request_no>的HTTP GET参数
+|===
+|Parameter |Description
+
+|===
+
+* 返回值
+
+返回的数据流类型为application/octet-stream，该数据流为下单请求中所有包裹的PDF面单文件。
+
+* 调用样例
+
+[source%nowrap,bash]
+$ http -a "your_username":"your_password" GET https://cnexpress.co.uk/api/v1/waybills/request/2017072300000002
+HTTP/1.1 200 OK
+Content-Disposition: attachment; filename=2017072300000002.pdf
+Content-Language: zh-cn
+Content-Length: 168004
+Content-Type: application/octet-stream
+...
++-----------------------------------------+
+| NOTE: binary data not shown in terminal |
++-----------------------------------------+
+
+'''
+
+NOTE: 考虑到有些下单请求中包含很多包裹，从而使得合并后的PDF面单文件较大。因此建议使用waybills/<request_no>-<tracking_no> API。
+
+
+=== tracking/<tracking_no>
+
+[source]
+https://cnexpress.co.uk/api/v1/tracking/<tracking_no>
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于在下单请求状态为Succeeded的情况下，获取单个包裹的追终信息。
+
+* 参数
+
+[cols="2,8"]
+.API tracking/<tracking_no>的HTTP GET参数
+|===
+|Parameter |Description
+
+|===
+
+* 返回值
+
+该API的返回值是一个JSON对象，其包含如下属性:
+
+[cols="2,8a"]
+.API tracking/<tracking_no>的HTTP GET返回值
+[[id_of_tracking_response]]
+|===
+|属性 |说明
+
+|tracking_no
+|该包裹的追踪号。主意测试模式下产生的追终号无法获取追终信息
+|delivered
+|表示是否已经运达目的地的布尔值
+|timestamp
+|ISO 8601格式的时间戳
+|progress
+[cols="2,8"]
+!===
+!属性 !说明
+
+!time
+!ISO 8601格式的时间戳
+!detail
+!具体追终信息
+!===
+|===
+
+* 调用样例
+
+[source%nowrap,bash]
+$ http -a "your_username":"your_password" GET https://cnexpress.co.uk/api/v1/tracking/XXXXXXXXX
+HTTP/1.1 200 OK
+...
+Content-Type: application/json
+...
+{
+    "delivered": true,
+    "progress": [
+        {
+            "detail": "英国包裹信息与面单已生成",
+            "time": "2017-05-05T14:13:33.313612Z"
+        },
+        {
+            "detail": "英国离开处理中心发往中国广州",
+            "time": "2017-05-05T15:02:54.035493Z"
+        },
+        {
+            "detail": "广州市到达广州白云机场 运往海关申报清关",
+            "time": "2017-05-06T12:12:00Z"
+        },
+        {
+            "detail": "江门市到达海关快件处理中心 进行清关",
+            "time": "2017-05-07T14:00:00Z"
+        },
+        {
+            "detail": "[韵达国际华南公司]进行揽件扫描",
+            "time": "2017-05-16T22:20:09+08:00"
+        },
+        {
+            "detail": "[广东东莞分拨中心]在分拨中心进行称重扫描",
+            "time": "2017-05-16T22:20:32+08:00"
+        },
+        {
+            "detail": "[广东东莞分拨中心]进行装车扫描，即将发往：福建福州分拨中心",
+            "time": "2017-05-16T22:23:30+08:00"
+        },
+        {
+            "detail": "[福建福州分拨中心]在分拨中心进行卸车扫描",
+            "time": "2017-05-17T20:58:23+08:00"
+        },
+        {
+            "detail": "[福建福州分拨中心]从站点发出，本次转运目的地：福建省XX市公司",
+            "time": "2017-05-17T21:00:45+08:00"
+        },
+        {
+            "detail": "[福建省XX市公司]到达目的地网点，快件将很快进行派送",
+            "time": "2017-05-18T07:10:52+08:00"
+        },
+        {
+            "detail": "[福建省XX市公司]进行派件扫描；派送业务员：XX；联系电话：XXX",
+            "time": "2017-05-18T08:09:09+08:00"
+        },
+        {
+            "detail": "[福建省XX市公司]进行派件扫描；派送业务员：XXX；联系电话：XXX",
+            "time": "2017-05-18T11:03:08+08:00"
+        },
+        {
+            "detail": "[福建省XX市公司]快件已被 已签收 签收",
+            "time": "2017-05-18T18:47:03+08:00"
+        }
+    ],
+    "timestamp": "2017-08-16T20:16:07.839199Z",
+    "tracking_no": "XXXXXXXXX"
+}
+
+'''
+
+
+== 错误处理
+
+本API使用标准的link:https://en.wikipedia.org/wiki/List_of_HTTP_status_codes[HTTP状态编码, window="_blank"]作为API返回状态。如果API调用错误，也会相应的返回JSON对象以便错误处理，其包含如下属性：
+
+[cols="2,8"]
+|===
+|属性 |说明
+
+|detail
+|*可选* 详细错误信息
+
+|[API参数名称]
+|*可选* 因该参数导致错误的详细原因
+
+|===
+
+如果有其他问题，请与CNExpress联系。
+
+== 可视化API
+
+可以通过点击链接link:++https://cnexpress.co.uk/api/v1++[API-Root]通过HTML网页方式体验CNExpressAPI。
+
+== 接入账号
+
+请与CNExpress联系具体的接入准备事宜。CNExpress会首先发放测试账号给接入方，测试通过之后，再发放有效账号，并充值使用。详情请联系CNExpress相关负责人员。

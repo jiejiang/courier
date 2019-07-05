@@ -1,0 +1,48 @@
+{% load i18n common_tags %}
+
+<ul class="nav navbar-nav navbar-right">
+    <li><a href="{% url "home" %}"><i class="fa fa-search"></i>&nbsp;{% trans "订单查询" %}</a></li>
+
+    {% if request.user.is_staff %}
+    <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-book"></i> {% trans "快速下单" %}<span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+            <li class="{% active 'courier_batch' %}"><a href="{% url "courier_batch" %}"><i class="fa fa-truck"></i>&nbsp;{% trans "大客户下单" %}</a></li>
+        </ul>
+    </li>
+    {% else %}
+    <li class="{% active 'courier_batch' %}"><a href="{% url "courier_batch" %}"><i class="fa fa-truck"></i>&nbsp;{% trans "大客户下单" %}</a></li>
+    {% endif %}
+
+    {% if request.user.is_authenticated %}
+
+    <li class="dropdown">
+        <a data-toggle="tooltip" title="{{ request.user.email }}" class="dropdown-toggle" data-toggle="dropdown"
+           role="button" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-user"></i> {% trans "我的账户" %}<span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+            <li class="{% active 'profile_update' %}"><a href="{% url "profile_update" %}"><i class="fa fa-user"></i>&nbsp;{% trans "信息修改" %}</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a href="{% url "logout" %}?next={%url "login"%}"><i class="fa fa-sign-out"></i>&nbsp;{% trans "安全退出" %}</a></li>
+        </ul>
+    </li>
+    {% else %}
+    <li class="{% active 'login' %}"><a href="{% url "login" %}"><i class="fa fa-sign-in"></i>&nbsp;{% trans "登录" %}</a></li>
+    {% endif %}
+
+    {% if request.user.is_staff %}
+    <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-user-secret"></i> {% trans "管理员功能" %}<span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+            <li class="{% active '^/parcel-force-.*' %}"><a href="{% url "parcel_force_import_job" %}"><i class="fa fa-upload"></i>&nbsp;{% trans "Parcel Force上传" %}</a></li>
+            <li class="{% active '^/sample-ticket.*' %}"><a href="{% url "sample_ticket" %}"><i class="fa fa-ticket"></i>&nbsp;{% trans "小票库" %}</a></li>
+            <li><a href="{% url 'admin:index' %}" target="_blank"><i class="fa fa-user-secret"></i>&nbsp;{% trans "管理后台" %}</a></li>
+        </ul>
+    </li>
+    {% endif %}
+</ul>

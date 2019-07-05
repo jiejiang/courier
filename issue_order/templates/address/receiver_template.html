@@ -1,0 +1,64 @@
+{% load i18n %}
+
+<div class="col-md-4 col-sm-6 col-xs-12 div_address">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>
+                        {% if object.alias %}
+                            {{object.alias}}
+                        {% else %}
+                            {{object.contact_name}}&nbsp;{{object.province}}{{object.city}}
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="col-md-6">
+                    <div class="pull-right">
+                        <button type="button" class="btn btn-sm btn-primary"
+                                data-toggle='modal' data-target='#address_modal'
+                                data-edit-url='{% url "receiver_address_update" pk=object.pk %}?is_template=true&format=html'>
+                            {% trans "修改" %}</button>
+                        <button type="button" class="btn btn-sm btn-danger btn_address_delete"
+                                data-delete-url='{% url "address_template_delete" pk=object.pk %}'>
+                            {% trans "删除" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel-body table-responsive">
+            <table class="table borderless">
+                <tbody>
+                    <tr>
+                        <th>{% trans "收货人" %}</th>
+                        <td>{{object.contact_name}}</td>
+                    </tr>
+                    <tr>
+                        <th>{% trans "国家" %}</th>
+                        <td>{{object.get_country_display}}</td>
+                    </tr>
+                    <tr>
+                        <th>{% trans "地区" %}</th>
+                        <td>{{object.province}}<span class="city">{{object.city}}<span class="district">{{object.district}}</td>
+                    </tr>
+                    <tr>
+                        <th>{% trans "地址" %}</th>
+                        <td>{{object.address_line_1}}</td>
+                    </tr>
+                    <tr>
+                        <th>{% trans "邮编" %}</th>
+                        <td>{{object.post_code}}</td>
+                    </tr>
+                    <tr>
+                        <th>{% trans "联系电话" %}</th>
+                        <td>{{object.contact_number}}</td>
+                    </tr>
+                    <tr>
+                        <th>{% trans "身份证号" %}</th>
+                        <td>{{object.id_number}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,15 @@
+{% extends "rest_framework/base.html" %}
+{% load staticfiles %}
+
+{% block bootstrap_theme %}
+    <link rel="stylesheet" href="{% static "css/spacelab/bootstrap.min.css" %}">
+{% endblock %}
+
+<title>{% block title %}{% if name %}{{ name }} – {% endif %}CNExpress API{% endblock %}</title>
+
+{% block branding %}
+    <a class='navbar-brand' rel="nofollow" href="{% url 'api-root' %}">
+        CNExpress API
+    </a>
+{% endblock %}
+

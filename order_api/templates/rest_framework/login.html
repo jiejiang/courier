@@ -1,0 +1,11 @@
+{% extends "rest_framework/login.html" %}
+{% load staticfiles %}
+{% load rest_framework %}
+
+{% block bootstrap_theme %}
+    <link rel="stylesheet" href="{% static "css/spacelab/bootstrap.min.css" %}">
+{% endblock %}
+
+{% block title %}{% if name %}{{ name }} – {% endif %}CNExpress API{% endblock %}
+
+{% block branding %}<h3 style="margin: 0 0 20px;">CNExpress API</h3>{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "track_order_base.html" %}
+{% load staticfiles i18n crispy_forms_tags %}
+{% block meta_title %}{% trans "查询订单号" %}{% endblock %}
+{% block navbar_block %}{% endblock %}
+{% block breadcrumb_block %}{% endblock %}
+{% block navbar_dropdown_menu %}{% endblock%}
+{% block main %}
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h3>{% trans "查询条件" %}</h3>
+            <h4>{% trans "线路: " %}
+                {% if route == 'order_system' %}{% trans "包税线路" %}{% endif %}
+                {% if route == 'parcel_force' %}{% trans "Parcel Force" %}{% endif %}
+            </h4>
+            {% for id in query.id %}
+            <h4>{% trans "收件人身份证" %}: {{id}}</h4>
+            {% endfor %}
+            {% for name_mobile in query.name_mobile %}
+            <h4>{% trans "收件人姓名和手机号码" %}: {{name_mobile}}</h4>
+            {% endfor %}
+            {% for mobile in query.mobile %}
+            <h4>{% trans "收件人手机号码" %}: {{mobile}}</h4>
+            {% endfor %}
+            {% if query.days %}
+            <h4>{% trans "下单时间范围" %}: {{query.days}}{% trans "天以内" %}</h4>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <table id="acrylic">
+                <thead>
+                    <tr>
+                        <th>{% trans "订单号" %}</th>
+                        <th>{% trans "收件人" %}</th>
+                        <th>{% trans "下单日期" %}</th>
+                        <th>{% trans "追踪" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="copy_content">
+                {% for order in orders %}
+                    {% if route == 'order_system' %}
+                        <tr>
+                            <td data-label="{% trans "订单号" %}">{{order.orderNumber}}</td>
+                            <td data-label="{% trans "收件人" %}">{{order.receiverName}}</td>
+                            <td data-label="{% trans "下单日期" %}">{{order.usedTime|date:"Y-m-d"}}</td>
+                            <td data-label="{% trans "追踪" %}">
+                                <form action="https://tracemyparcel.co.uk/" method="post" target="_blank">
+                                    <input type="text" name="order_number" value="{{order.orderNumber}}" style="display:none">
+                                    <button type="submit"><i class="fa-truck fa" aria-hidden="true"></i>&nbsp;{% trans "点此追踪" %}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if route == 'parcel_force' %}
+                        <tr>
+                            <td data-label="{% trans "包裹号" %}">{{order.reference_number}}</td>
+                            <td data-label="{% trans "收件人" %}">{{order.receiver_name}}</td>
+                            <td data-label="{% trans "发货日期" %}">{{order.dispatch_date|date:"Y-m-d"}}</td>
+                            <td data-label="{% trans "追踪" %}">
+                                <form action="https://www.parcelforce.com/track-trace" method="post" target="_blank">
+                                    <input type="text" name="parcel_tracking_number" value="{{order.reference_number}}" style="display:none">
+                                    <button type="submit"><i class="fa-truck fa" aria-hidden="true"></i>&nbsp;{% trans "点此追踪" %}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endif %}
+
+                {% empty %}
+                    <tr>
+                        <td data-label="{% trans "查询结果" %}">{% trans "没有找到订单" %}</td>
+                    </tr>
+                {% endfor%}
+
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" data-label="">
+                            <button class="copy_btn btn btn-lg pull-left btn-warning" data-clipboard-target="#copy_content">
+                                <i class="fa fa-files-o" aria-hidden="true"></i> {% trans "全部复制" %}
+                            </button>
+                            <a href="{% url "home" %}" class="btn btn-info btn-lg pull-right" role="button"><i class="fa fa-arrow-circle-left" aria-hidden="true"></i> {% trans "重新查询" %}</a>
+                        </td>
+                    </tr>
+
+                </tfoot>
+
+            </table>
+        </div>
+    </div>
+
+    <div class="row top-buffer">
+        <div class="col-md-4 text-center col-md-offset-4 top-buffer">
+            <p class="text-danger top-buffer">{% trans "公告：请大家务必确保身份证信息的准确性，任何因身份证信息有误造成的清关缓慢由发件方承担责任。希望大家配合理解!" %}</p>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var clipboard = new Clipboard('.copy_btn');
+        clipboard.on('success', function(e) {
+            alert('{% trans "已经复制, 请粘帖到Excel表格中." %}');
+        });
+        clipboard.on('error', function(e) {
+            alert('{% trans "无法自动复制, 手工操作." %}');
+        });
+    </script>
+{% endblock %}
+{% block footer_menu_block %}{% endblock %}
+{% block extra_css %}
+    <link href="{% static "css/query_order.css" %}" rel="stylesheet">
+{% endblock %}
+{% block extra_js %}
+    <script type="text/javascript" src="{% static "js/clipboard.min.js" %}"></script>
+
+{% endblock %}

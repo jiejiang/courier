@@ -1,0 +1,37 @@
+{% extends "track_order_base.html" %}
+{% load staticfiles i18n crispy_forms_tags %}
+{% block meta_title %}{% trans "查询订单号" %}{% endblock %}
+{% block navbar_block %}{% endblock %}
+{% block breadcrumb_block %}{% endblock %}
+{% block navbar_dropdown_menu %}{% endblock%}
+{% block main %}
+    <div class="row main">
+        <div class="panel-heading">
+           <div class="panel-title text-center">
+                <h1 class="title">{% trans "CNExpress 订单查询" %}</h1>
+                <hr />
+            </div>
+        </div>
+
+        <div class="main-login main-center">
+            {% crispy form %}
+
+            <hr/>
+            <div>
+                <p class="text-danger">{% trans "注: 本网站只能查询包税线路(邮政/韵达)和Parcel Force的单号, 其他线路的单号请联系客服. 谢谢您的支持!" %}</p>
+            </div>
+
+            <hr/>
+            <div>
+                <a class="btn btn-success btn-lg btn-block" href="{% url "courier_batch" %}">{% trans "大客户登录" %}</a>
+            </div>
+
+        </div>
+
+
+    </div>
+{% endblock %}
+{% block footer_menu_block %}{% endblock %}
+{% block extra_css %}
+    <link href="{% static "css/query_order.css" %}" rel="stylesheet">
+{% endblock %}

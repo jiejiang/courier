@@ -1,0 +1,123 @@
+{% extends "issue_order_base.html" %}
+{% load staticfiles i18n mezzanine_tags formset_tags %}
+{% block breadcrumb_block %}{% endblock %}
+{% block meta_title%}{% trans "地址簿" %}{% endblock %}
+{% block title%}{% trans "地址簿" %}{% endblock %}
+{% block main_content %}
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#receiver_address">{% trans "收件地址" %}&nbsp;
+                <button type="button" class="btn btn-sm btn-secondary" data-toggle='modal' data-target='#address_modal'
+                        data-create-url='{% url "receiver_address_create" %}?is_template=true&format=html' data-tab="#receiver_address">
+                    <i class="fa fa-plus"></i> {% trans "新建" %}</button>
+            </a></li>
+            <li><a data-toggle="tab" href="#sender_address">{% trans "发件地址" %}&nbsp;
+                <button type="button" class="btn btn-sm btn-secondary" data-toggle='modal' data-target='#address_modal'
+                        data-create-url='{% url "sender_address_create" %}?is_template=true&format=html' data-tab="#sender_address">
+                    <i class="fa fa-plus"></i> {% trans "新建" %}</button>
+            </a></li>
+        </ul>
+
+        <div class="tab-content" style="background-color: white;">
+            <div id="receiver_address" class="tab-pane fade in active">
+                <div class="row address_container">
+                    {% for address in object_list %}
+                    {% if address.country == 'CN' %}
+                        {% include "address/receiver_template.html" with object=address only %}
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div id="sender_address" class="tab-pane fade">
+                <div class="row address_container">
+                    {% for address in object_list %}
+                    {% if address.country == 'GB' %}
+                        {% include "address/sender_template.html" with address=address only %}
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div id="sender_address2" class="tab-pane fade"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="address_modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        $(function() {
+            function on_delete_address() {
+                var r = confirm("确定删除地址？");
+                var button = $(this);
+                if (r == true) {
+                    $.ajax({
+                        url: button.data('delete-url'),
+                        type: 'delete',
+                        success: function (data) {
+                            button.closest('.div_address').fadeOut(300, function() { $(this).remove(); });
+                        }
+                    });
+                }
+            }
+
+            $('button[data-delete-url]').on('click', on_delete_address);
+
+            $('#address_modal').on('show.bs.modal', function (event) {
+                $(this).find('.modal-content').html('');
+                var button = $(event.relatedTarget);
+                if (button.data('edit-url')) {
+                    var url = button.data('edit-url');
+                    var edit_mode = true;
+                } else {
+                    var url = button.data('create-url');
+                    var edit_mode = false;
+                }
+                var modal = $(this);
+
+                function on_form_submit(e) {
+                    e.preventDefault();
+                    if (url) {
+                        $.ajax({
+                            url: url,
+                            type: 'post',
+                            data: modal.find('form').serialize(),
+                            success: function(data, textStatus, jqXHR) {
+                                if (edit_mode) {
+                                    button.closest('.div_address').html($(data).html());
+                                } else {
+                                    $(button.data('tab')).find('.address_container').prepend(data);
+                                }
+                                $('button[data-delete-url]').off('click').on('click', on_delete_address);
+                                modal.modal('hide');
+                            },
+                            error: function(jqXHR) {
+                                modal.find('.modal-content').html(jqXHR.responseText)
+                                .find('form').submit(on_form_submit);;
+                            }
+                        });
+                    }
+                }
+
+                if (url) {
+                    $.ajax({
+                        url: url,
+                        type: 'get',
+                        success: function (response) {
+                            modal.find('.modal-content').html(response)
+                            .find('form').submit(on_form_submit);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% load i18n %}
+
+<table class="table borderless">
+    <tbody>
+        <tr>
+            <th>{% trans "发件人" %}</th>
+            <td>{{address.contact_name}}</td>
+        </tr>
+        <tr>
+            <th>{% trans "国家" %}</th>
+            <td>{{address.get_country_display}}</td>
+        </tr>
+        <tr>
+            <th>{% trans "地址" %}</th>
+            <td>{{address.address_line_1}}, {{address.address_line_2}}, {{address.city}}</td>
+        </tr>
+        <tr>
+            <th>{% trans "邮编" %}</th>
+            <td>{{address.post_code}}</td>
+        </tr>
+        <tr>
+            <th>{% trans "联系电话" %}</th>
+            <td>{{address.contact_number}}</td>
+        </tr>
+    </tbody>
+</table>

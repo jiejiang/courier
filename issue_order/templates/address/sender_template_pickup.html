@@ -1,0 +1,21 @@
+{% load i18n %}
+
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-6">
+                {% trans "取件地址：" %}
+            </div>
+            <div class="col-md-6">
+                <button type="button" class="btn btn-sm btn-warning pull-right" data-toggle='modal' data-target='#address_modal'
+                    data-url='{% url "sender_address_update" pk=address.pk %}?format=html&type=pickup'>
+                <i class="fa fa-edit"></i> {% trans "修改取件地址" %}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        {% include "address/sender_template_body.html" with address=address only %}
+    </div>
+</div>
+

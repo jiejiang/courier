@@ -1,0 +1,33 @@
+{% load i18n %}
+
+<div class="col-md-4 col-sm-6 col-xs-12 div_address">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>
+                        {% if address.alias %}
+                            {{address.alias}}
+                        {% else %}
+                            {{address.contact_name}}&nbsp;{{address.city}}
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="col-md-6">
+                    <div class="pull-right">
+                        <button type="button" class="btn btn-sm btn-primary"
+                                data-toggle='modal' data-target='#address_modal'
+                                data-edit-url='{% url "sender_address_update" pk=address.pk %}?is_template=true&format=html'>
+                            {% trans "修改" %}</button>
+                        <button type="button" class="btn btn-sm btn-danger"
+                                data-delete-url='{% url "address_template_delete" pk=address.pk %}'>
+                            {% trans "删除" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+            {% include "address/sender_template_body.html" with address=address only %}
+        </div>
+    </div>
+</div>
