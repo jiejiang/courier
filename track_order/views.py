@@ -6,6 +6,7 @@ import sys, requests, os, datetime, random, pytz
 
 from django.shortcuts import render, get_object_or_404
 from django.core.urlresolvers import reverse_lazy
+from django.views.decorators.cache import never_cache
 from django.views.generic import ListView, TemplateView, DeleteView, CreateView
 from django.views.generic.edit import FormView, FormMixin
 from django.contrib import messages
@@ -225,6 +226,7 @@ class ParcelForceOrderListView(ListView):
         return context
 
 
+@method_decorator(never_cache, name='dispatch')
 @method_decorator(csrf_exempt, name='dispatch')
 class TrackShippingView(FormView):
     template_name = "track_shipping.html"
