@@ -342,6 +342,114 @@ IMPORTANT: cities返回的任何城市都可以用作收件人地址，但CNExpr
 
 IMPORTANT: "香港“，‘澳门”和“台湾”的城市不能作为有效收件人城市使用。
 
+=== routes
+
+[source]
+https://cnexpress.co.uk/api/v1/routes
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于获取CNExpress API支持的线路信息。
+
+* 参数
+
+[cols="2,8"]
+.API routes的HTTP GET参数
+|===
+|参数 |说明
+|===
+
+* 返回值
+
+该方法返回JSON数组，其中每个元素包含如下属性：
+
+[cols="2,8"]
+.API routes的HTTP GET返回值
+|===
+|属性 |说明
+
+|url
+|该线路对应的routes/<code> URL
+|name
+|线路名称
+|code
+|线路代码值
+|===
+
+* 调用样例（本文档中所有调用样例都是使用link:https://github.com/jkbrzt/httpie[HTTPie,window="_blank"]完成）
+
+[source%nowrap,bash]
+$ http -a "my_username":"my_password" GET https://cnexpress.co.uk/api/v1/routes
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+...
+[
+    {
+        "url": "https://cnexpress.co.uk/api/v1/routes/cnpost",
+        "name": "邮政线",
+        "code": "cnpost"
+    },
+]
+
+
+'''
+
+=== routes/<code>
+
+[source]
+https://cnexpress.co.uk/api/v1/routes/<code>
+
+==== GET
+
+* 说明
+
+HTTP GET方法，用于测试特定code线路是否被CNExpress API支持。
+
+* 参数
+
+[cols="2,8"]
+.API routes的HTTP GET参数
+|===
+|参数 |说明
+|===
+
+* 返回值
+
+该方法返回JSON对象，包含如下属性：
+
+[cols="2,8"]
+.API routes的HTTP GET返回值
+|===
+|属性 |说明
+
+|url
+|该产品对应的routes/<code> URL
+|name
+|线路名称
+|code
+|线路代码值
+|===
+
+* 调用样例（本文档中所有调用样例都是使用link:https://github.com/jkbrzt/httpie[HTTPie,window="_blank"]完成）
+
+[source%nowrap,bash]
+$ http -a "my_username":"my_password" GET https://cnexpress.co.uk/api/v1/routes/cnpost
+HTTP/1.0 200 OK
+...
+Content-Type: application/json
+...
+{
+    "url": "https://cnexpress.co.uk/api/v1/routes/cnpost",
+    "name": "邮政线",
+    "code": "cnpost"
+}
+
+
+'''
+
 
 === requests
 
@@ -362,6 +470,9 @@ HTTP POST方法。该方法用于向CNExpress提交快递下单请求。该请�
 .API requests的HTTP POST参数
 |===
 |参数 |说明
+
+|route_code
+|[可选] 线路选择，需传递有效/routes方法获取的的线路code。如此参数为空，则选择默认线路。
 
 |packages
 |JSON数组，包含一个或者多个JSON对象，其中每个JSON对象代表一个待发送的包裹。每个包裹的参数方式见表<<id_of_package_param_table>>。
@@ -457,6 +568,7 @@ IMPORTANT: 如果账号不是测试模式，请确保该账号有足够的余额
 本样例使用如下json文件sample.json作为请求数据
 [source%nowrap,json]
 {
+  "route_code": "cnpost",
   "packages": [
       {
         "sender_name": "发件人1",
@@ -526,6 +638,7 @@ Content-Type: application/json
 {
     "creation_date": "2017-08-04T16:11:24.442102Z",
     "error_msg": null,
+    "route_code": "cnpost",
     "packages": [
         {
             "cost": 20.0,
@@ -643,6 +756,7 @@ Content-Type: application/json
 {
     "creation_date": "2017-07-23T11:11:17.982827Z",
     "error_msg": null,
+    "route_code": "cnpost",
     "packages": [
         {
             "cost": 20.0,

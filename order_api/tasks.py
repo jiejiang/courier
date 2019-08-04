@@ -67,7 +67,8 @@ def submit_request(request, timestamp=timezone.now(), save=True):
                                 " | ".join(filter(lambda x: x, ("API", request.owner.username, request.owner.last_name,
                                                                 request.owner.first_name, request.owner.email))),
                                 filename=request.request_no + '.xlsx',
-                                test_mode=request.test_mode)
+                                test_mode=request.test_mode,
+                                route=(request.route.code if request.route else None))
     request.uuid = uuid
     request.system = system
     request.status_code = Request.StatusCode.SUBMITTED

@@ -17,6 +17,15 @@ class Profile(models.Model):
     api_test_mode = models.BooleanField(null=False, blank=False, default=False)
 
 
+class Route(models.Model):
+    code = models.CharField(max_length=64, blank=False, null=False, unique=True, db_index=True)
+    name = models.CharField(max_length=128, blank=False, null=False, unique=True)
+    is_enabled = models.BooleanField(default=True, null=False, blank=False)
+
+    def __unicode__(self):
+        return self.name
+
+
 class Request(models.Model):
     class StatusCode:
         CREATED = 0
@@ -28,6 +37,7 @@ class Request(models.Model):
         FAILED = 300
 
     owner = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
+    route = models.ForeignKey(Route, on_delete=models.SET_NULL, null=True, blank=True)
     request_no = models.CharField(max_length=64, null=True, blank=True, unique=True, db_index=True)
     creation_date = models.DateTimeField(auto_now_add=True, null=False, blank=False)
     status_code = models.IntegerField(blank=False, null=False, default=StatusCode.CREATED, db_index=True)

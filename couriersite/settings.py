@@ -395,7 +395,8 @@ KUAIDI100_KEY = "gdXYsDNk3139"
 WAYBILL_STORAGE_LOCATION = os.path.join(PROJECT_ROOT, "waybill_storage")
 
 ADMIN_MENU_ORDER = (
-    ("Admin", ('auth.User', 'auth.Group', 'order_api.Product', 'order_api.Request', 'track_order.ParcelForceOrder')),
+    ("Admin", ('auth.User', 'auth.Group', 'order_api.Product', 'order_api.Request', 'track_order.ParcelForceOrder',
+               'order_api.Route')),
     ("Content", ("pages.Page", "blog.BlogPost", 'generic.ThreadedComment', ('Media Library', 'media-library'))),
     ('Site', ('sites.Site', 'redirects.Redirect', 'conf.Setting',)),
 )

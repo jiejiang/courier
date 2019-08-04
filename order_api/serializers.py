@@ -1,6 +1,6 @@
 from rest_framework import serializers
 import six
-from order_api.models import Product, Request, Package, PackageItem
+from order_api.models import Product, Request, Package, PackageItem, Route
 
 class ProductSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="product-detail", lookup_field='barcode')
@@ -10,6 +10,16 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ('url', 'name', 'barcode')
+
+
+class RouteSerializer(serializers.ModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="route-detail", lookup_field='code')
+    code = serializers.ReadOnlyField()
+    name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Route
+        fields = ('url', 'code', 'name')
 
 
 class PackageItemSerializer(serializers.ModelSerializer):
@@ -58,7 +68,10 @@ class PackageSerializer(serializers.ModelSerializer):
                   'receiver_id_number', 'weight', 'length', 'width', 'height', 'items', 'cost')
 
 class RequestSerializer(serializers.HyperlinkedModelSerializer):
+    route_code_choices = Route.objects.values_list('code', flat=True)
+
     url = serializers.HyperlinkedIdentityField(view_name="request-detail", lookup_field='request_no')
+    route_code = serializers.ChoiceField(required=False, choices=route_code_choices, source='route.code')
     test_mode = serializers.ReadOnlyField()
     request_no = serializers.ReadOnlyField()
     waybills = RequestHyperlinkedIdentityField(view_name="request-waybill-detail", lookup_field='request_no')
@@ -70,8 +83,8 @@ class RequestSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Request
-        fields = ('url', 'test_mode', 'request_no', 'waybills', 'creation_date', 'status', 'error_msg', 'packages',
-                  'total_cost')
+        fields = ('url', 'route_code', 'test_mode', 'request_no', 'waybills', 'creation_date', 'status', 'error_msg',
+                  'packages', 'total_cost')
         lookup_field = "request_no"
 
 

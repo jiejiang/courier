@@ -12,8 +12,9 @@ from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import render
 from issue_order.models import Profile
 from rest_framework import viewsets, permissions
-from order_api.models import Product, Request, PackageItem, Package
-from order_api.serializers import ProductSerializer, RequestSerializer, PackageSerializer, WaybillSerializer
+from order_api.models import Product, Request, PackageItem, Package, Route
+from order_api.serializers import ProductSerializer, RequestSerializer, PackageSerializer, WaybillSerializer, \
+    RouteSerializer
 from order_api.permissions import IsApiUser, IsPackageOwner, IsRequestOwner
 from rest_framework.exceptions import APIException, status, NotFound, ParseError, ValidationError
 from rest_framework.generics import get_object_or_404
@@ -48,6 +49,17 @@ class ProductViewSet(URLConfMixin,
     lookup_value_regex = r"[\w\-]+"
 
 
+class RouteViewSet(URLConfMixin,
+                   viewsets.mixins.ListModelMixin,
+                   viewsets.mixins.RetrieveModelMixin,
+                   viewsets.GenericViewSet):
+    queryset = Route.objects.exclude(is_enabled=False).order_by('name')
+    serializer_class = RouteSerializer
+    permission_classes = (permissions.IsAuthenticated, IsApiUser,)
+    lookup_field = 'code'
+    lookup_value_regex = r"[\w\-]+"
+
+
 class RequestViewSet(URLConfMixin,
                      viewsets.mixins.CreateModelMixin,
                      viewsets.mixins.RetrieveModelMixin,
@@ -73,7 +85,12 @@ class RequestViewSet(URLConfMixin,
 
             with transaction.atomic():
                 packages = data.pop('packages')
-                serializer.save(owner=self.request.user, test_mode=self.request.user.api_profile.api_test_mode)
+                route_code = data.get('route', {}).get('code', None)
+                route = get_object_or_404(Route, code=route_code) if route_code else None
+                if route_code and (not route or not route.is_enabled):
+                    raise APIException(_(u"route不可用：%s" % route_code), code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                serializer.save(owner=self.request.user, test_mode=self.request.user.api_profile.api_test_mode,
+                                route=route)
                 for i, _package in enumerate(packages):
                     packageitem_set = _package.pop('packageitem_set')
                     package = Package.objects.create(request=serializer.instance, **_package)

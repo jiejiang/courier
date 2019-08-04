@@ -15,6 +15,7 @@ router.APIRootView = APIRootView
 router.register(r'account', views.AccountViewSet, base_name='account')
 router.register(r'products', views.ProductViewSet, base_name='product')
 router.register(r'cities', views.CityViewSet, base_name='city')
+router.register(r'routes', views.RouteViewSet, base_name='route')
 router.register(r'requests', views.RequestViewSet, base_name='request')
 router.register(r'packages', views.PackageViewSet, base_name='package')
 router.register(r'waybills', views.WaybillViewSet, base_name='waybill')

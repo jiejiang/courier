@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserChangeForm
 from mezzanine.core.admin import TabularDynamicInlineAdmin
 
-from order_api.models import Product, Request, Profile, Package, PackageItem
+from order_api.models import Product, Request, Profile, Package, PackageItem, Route
 
 def api_profile(self):
     if not hasattr(self, '_api_profile'):
@@ -55,5 +55,10 @@ class RequestAdmin(admin.ModelAdmin):
         return False
 
 
+class RouteAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'is_enabled')
+
+
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Request, RequestAdmin)
+admin.site.register(Route, RouteAdmin)
