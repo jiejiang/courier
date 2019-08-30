@@ -48,6 +48,8 @@ class Request(models.Model):
     system = models.CharField(_("System Name"), max_length=32, db_index=True, null=True, blank=True)
     test_mode = models.BooleanField(null=False, blank=True, default=False)
 
+    external_order_no = models.CharField(max_length=64, null=True, blank=True, default=None)
+
     @property
     def status(self):
         if self.status_code < Request.StatusCode.SUBMITTED:
@@ -111,6 +113,8 @@ class Package(models.Model):
     height = models.IntegerField(validators=[MinValueValidator(1)])
 
     waybill_file = models.FileField(upload_to=waybill_upload_to, storage=waybill_file_storage, null=True, blank=True)
+
+    external_package_no = models.CharField(max_length=64, null=True, blank=True, default=None)
 
     @property
     def request_no(self):

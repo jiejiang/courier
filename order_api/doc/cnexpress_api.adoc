@@ -473,6 +473,8 @@ HTTP POST方法。该方法用于向CNExpress提交快递下单请求。该请�
 
 |route_code
 |[可选] 线路选择，需传递有效/routes方法获取的的线路code。如此参数为空，则选择默认线路。
+|order_no
+|[可选] 外部订单号, 用于内部查询。目前在圆通线里会和下面的package_no一起打印到面单上。
 
 |packages
 |JSON数组，包含一个或者多个JSON对象，其中每个JSON对象代表一个待发送的包裹。每个包裹的参数方式见表<<id_of_package_param_table>>。
@@ -510,6 +512,8 @@ HTTP POST方法。该方法用于向CNExpress提交快递下单请求。该请�
 |包裹宽度（厘米）
 |height
 |包裹高度（厘米）
+|package_no
+|[可选] 外部包裹号, 用于内部查询。目前在圆通线里会和上面的order_no一起打印到面单上。
 |items
 |包裹内容。这是一个JSON数组，包含一个或者多个JSON对象，其中每个JSON对象代表一种代发产品。每个产品的参数方式见表<<id_of_item_param_table>>。
 
@@ -569,6 +573,7 @@ IMPORTANT: 如果账号不是测试模式，请确保该账号有足够的余额
 [source%nowrap,json]
 {
   "route_code": "cnpost",
+  "order_no": "1234567",
   "packages": [
       {
         "sender_name": "发件人1",
@@ -584,6 +589,7 @@ IMPORTANT: 如果账号不是测试模式，请确保该账号有足够的余额
         "length": 20,
         "width": 20,
         "height": 20,
+        "package_no": "1",
         "items": [
             {
               "barcode": "5000378998287",
@@ -639,10 +645,12 @@ Content-Type: application/json
     "creation_date": "2017-08-04T16:11:24.442102Z",
     "error_msg": null,
     "route_code": "cnpost",
+    "order_no": "1234567",
     "packages": [
         {
             "cost": 20.0,
             "height": 20,
+            "package_no": "1",
             "items": [
                 {
                     "barcode": "5000378998287",
@@ -675,6 +683,7 @@ Content-Type: application/json
         {
             "cost": 13.0,
             "height": 20,
+            "package_no": null,
             "items": [
                 {
                     "barcode": "0721865545337",

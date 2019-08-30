@@ -44,18 +44,19 @@ def submit_request(request, timestamp=timezone.now(), save=True):
     ws.append([u"发件人名字", u"发件人电话号码", u"发件人地址",
                u"收件人名字（中文）", u"收件人手机号（11位数）", u"收件人地址（无需包括省份和城市）",
                u"收件人城市（中文）", u"收件人邮编", u"身份证号(EMS需要)",
-               u"包裹数量", u"包裹重量（公斤）", u"长（厘米）", u"宽（厘米）", u"高（厘米）",
+               u"包裹数量", u"包裹重量（公斤）", u"长（厘米）", u"宽（厘米）", u"高（厘米）", u"EXTERNAL_PACKAGE_NO",
                u"申报物品1(英文）", u"数量", u"物品单价（英镑）",
                u"申报物品2(英文）", u"数量", u"物品单价（英镑）",
                u"申报物品3(英文）", u"数量", u"物品单价（英镑）",
                u"申报物品4(英文）", u"数量", u"物品单价（英镑）",
                u"申报物品5(英文）", u"数量", u"物品单价（英镑）",
-               u"申报物品6(英文）", u"数量", u"物品单价（英镑）"])
+               u"申报物品6(英文）", u"数量", u"物品单价（英镑）", ])
     for package in request.packages.order_by('id'):
         row = [package.sender_name, package.sender_phone_number, package.sender_address,
                package.receiver_name, package.receiver_phone_number, package.receiver_address,
                package.receiver_city, package.receiver_post_code, package.receiver_id_number,
-               package.items.count(), package.weight, package.length, package.width, package.height]
+               package.items.count(), package.weight, package.length, package.width, package.height,
+               (package.external_package_no if package.external_package_no else '')]
         for item in PackageItem.objects.filter(package=package).order_by('id'):
             row.extend([item.product.internal_name if item.product.internal_name else item.product.name,
                         item.count, item.product.unit_price])
@@ -68,7 +69,8 @@ def submit_request(request, timestamp=timezone.now(), save=True):
                                                                 request.owner.first_name, request.owner.email))),
                                 filename=request.request_no + '.xlsx',
                                 test_mode=request.test_mode,
-                                route=(request.route.code if request.route else None))
+                                route=(request.route.code if request.route else None),
+                                external_order_no=(request.external_order_no if request.external_order_no else None))
     request.uuid = uuid
     request.system = system
     request.status_code = Request.StatusCode.SUBMITTED

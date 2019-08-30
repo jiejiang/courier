@@ -126,7 +126,7 @@ def list_cities(url_base, user_name, password):
     return requests.get(url_base + "/api/v1.0/cities", auth=HTTPBasicAuth(user_name, password))
 
 def create_courier_batch(url_base, user_name, password, file_obj, issuer, filename=None, test_mode=None,
-                         route=None):
+                         route=None, external_order_no=None):
     file_obj.seek(0)
     if filename:
         file_obj = (str(uuid.uuid4()) + os.path.splitext(filename)[-1], file_obj)
@@ -137,6 +137,8 @@ def create_courier_batch(url_base, user_name, password, file_obj, issuer, filena
         data['test_mode'] = True
     if route:
         data['route'] = route
+    if external_order_no:
+        data['external_order_no'] = external_order_no
     response = requests.post(url_base + "/api/v1.0/batch-order", data=data, files={'file': file_obj},
                              auth=HTTPBasicAuth(user_name, password))
     print response.content

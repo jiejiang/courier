@@ -54,6 +54,8 @@ class RequestHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
 
 
 class PackageSerializer(serializers.ModelSerializer):
+    package_no = serializers.CharField(source="external_package_no", required=False)
+
     url = TrackingNoHyperlinkedIdentityField(view_name="package-detail", lookup_field='slug')
     tracking_no = serializers.ReadOnlyField()
     waybill = TrackingNoHyperlinkedIdentityField(view_name="waybill-detail", lookup_field='slug')
@@ -63,12 +65,13 @@ class PackageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Package
-        fields = ('url', 'tracking_no', 'waybill', 'request', 'sender_name', 'sender_phone_number', 'sender_address',
+        fields = ('url', 'package_no', 'tracking_no', 'waybill', 'request', 'sender_name', 'sender_phone_number', 'sender_address',
                   'receiver_name', 'receiver_phone_number', 'receiver_address', 'receiver_city', 'receiver_post_code',
                   'receiver_id_number', 'weight', 'length', 'width', 'height', 'items', 'cost')
 
 class RequestSerializer(serializers.HyperlinkedModelSerializer):
     route_code_choices = Route.objects.values_list('code', flat=True)
+    order_no = serializers.CharField(source="external_order_no", required=False)
 
     url = serializers.HyperlinkedIdentityField(view_name="request-detail", lookup_field='request_no')
     route_code = serializers.ChoiceField(required=False, choices=route_code_choices, source='route.code')
@@ -81,9 +84,11 @@ class RequestSerializer(serializers.HyperlinkedModelSerializer):
     packages = PackageSerializer(many=True)
     total_cost = serializers.ReadOnlyField()
 
+
+
     class Meta:
         model = Request
-        fields = ('url', 'route_code', 'test_mode', 'request_no', 'waybills', 'creation_date', 'status', 'error_msg',
+        fields = ('url', 'order_no', 'route_code', 'test_mode', 'request_no', 'waybills', 'creation_date', 'status', 'error_msg',
                   'packages', 'total_cost')
         lookup_field = "request_no"
 
