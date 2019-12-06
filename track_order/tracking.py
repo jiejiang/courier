@@ -75,8 +75,12 @@ def query_tracking_info(order_number, now):
             record.departure_time = __parse_datetime(order['retractionTime'])
             record.status = ShippingRecord.Status.DEPARTURE
             #pre populate the landing and custom time
-            record.landed_time, record.custom_clearance_time = \
-                __calc_landed_custom_clearance_time(record.departure_time)
+            if order['landedTime'] and order['customClearanceTime']:
+                record.landed_time = __parse_datetime(order['landedTime'])
+                record.custom_clearance_time = __parse_datetime(order['customClearanceTime'])
+            else:
+                record.landed_time, record.custom_clearance_time = \
+                    __calc_landed_custom_clearance_time(record.departure_time)
             print record.landed_time, record.custom_clearance_time
         created = True
 
@@ -91,8 +95,12 @@ def query_tracking_info(order_number, now):
             record.departure_time = __parse_datetime(order['retractionTime'])
             record.status = ShippingRecord.Status.DEPARTURE
             #pre populate the landing and custom time
-            record.landed_time, record.custom_clearance_time = \
-                __calc_landed_custom_clearance_time(record.departure_time)
+            if order['landedTime'] and order['customClearanceTime']:
+                record.landed_time = __parse_datetime(order['landedTime'])
+                record.custom_clearance_time = __parse_datetime(order['customClearanceTime'])
+            else:
+                record.landed_time, record.custom_clearance_time = \
+                    __calc_landed_custom_clearance_time(record.departure_time)
             modified = True
         # in the case of order reused, order would return None here, but no need to deal with it since no one knew
             # the old order number anyway
