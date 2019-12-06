@@ -48,16 +48,17 @@ def extract_order_info(file_obj, callback=None):
             outfile.write(page_data)
             pdf = pdfquery.PDFQuery(page_data)
             pdf.load()
-            # print etree.tostring(pdf.tree, pretty_print=True)
+            #if i == 0:
+            #    print etree.tostring(pdf.tree, pretty_print=True)
 
             if not 'name' in info or not 'telephone' in info:
                 nodes = pdf.tree.xpath(u"//*[contains(text(), '请小心轻放')]")
                 if len(nodes) > 0:
                     soup = BeautifulSoup(etree.tostring(pdf.tree), 'lxml')
                     segments = filter(lambda x:x, map(lambda x:x.strip(), soup.findAll(text=True)))
-                    if len(segments) > 5:
-                        name = segments[-5]
-                        telephone = segments[-4]
+                    if len(segments) >= 3:
+                        name = segments[2]
+                        telephone = segments[1]
                         if name and telephone:
                             info['name'] = name
                             info['telephone'] = telephone
